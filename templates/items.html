@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Items{% endblock %}
+
+{% block content %}
+<h2>Items</h2>
+<a href="{{ url_for('add_item') }}" class="btn btn-primary mb-3">
+  <i class="bi bi-plus-circle me-1"></i> Neues Produkt hinzufügen
+</a>
+<!-- New tall button for increasing quantity -->
+<a href="#updateQuantityForm" class="btn btn-success mb-3" id="increaseQuantityBtn">
+  <i class="bi bi-plus-circle me-1"></i> Menge Produkts erhöhen
+</a>
+<!-- Hidden form to update quantity -->
+<div id="updateQtyForm" style="display:none; margin-bottom: 1rem;">
+  <form method="POST" action="{{ url_for('update_quantity') }}">
+    <div class="mb-3">
+      <label for="productName" class="form-label">Produktname</label>
+      <input type="text" class="form-control" id="productName" name="product_name" required>
+    </div>
+    <div class="mb-3">
+      <label for="additionalQty" class="form-label">Zusätzliche Menge</label>
+      <input type="number" name="add_quantity" min="1" required class="form-control" placeholder="z.B. 1 oder 5">
+
+    </div>
+    <button type="submit" class="btn btn-success me-2">Menge aktualisieren</button>
+    <button type="button" class="btn btn-secondary" id="cancelUpdateQty">Abbrechen</button>
+  </form>
+</div>
+
+
+<input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Suche nach Produktname oder Barcode..." onkeyup="filterTable()">
+
+<table class="table table-bordered align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Produktname</th>
+      <th>Barcode</th>
+      <th>Einkaufspreis (€)</th>
+      <th>Verkaufspreis (€)</th>
+      <th>Min Verkaufspreis (€)</th>
+      <th>Menge</th>
+      <th>Beschreibung</th>
+      <th>Foto</th>
+      <th>Aktionen</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td>{{ item.product_name }}</td>
+      <td>{{ item.barcode }}</td>
+      <td>{{ "%.2f"|format(item.purchase_price) }}</td>
+      <td>{{ "%.2f"|format(item.selling_price) }}</td>
+      <td>{{ "%.2f"|format(item.min_selling_price) }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>{{ item.description }}</td>
+      <td>
+        {% if item.photo_link %}
+          <img src="{{ item.photo_link }}" width="50" alt="Product photo">
+        {% else %}
+          <span class="text-muted">No Image</span>
+        {% endif %}
+      </td>
+      <td class="d-flex gap-1 flex-wrap">
+
+        <!-- Edit Button -->
+        <a href="{{ url_for('edit_item', barcode=item.barcode) }}" class="btn btn-sm btn-warning" title="Bearbeiten">
+          <i class="bi bi-pencil-square"></i>
+        </a>
+
+        <!-- Delete Button -->
+        <form method="POST" action="{{ url_for('delete_item', barcode=item.barcode) }}" onsubmit="return confirm('Delete this item?');">
+          <button class="btn btn-sm btn-danger" title="Löschen">
+            <i class="bi bi-trash"></i>
+          </button>
+        </form>
+
+        <!-- Print Barcode Button -->
+        <a 
+          href="{{ url_for('barcode_print', barcode_value=item.barcode) }}" 
+          class="btn btn-sm btn-outline-primary" 
+          target="_blank" 
+          title="Code drucken"
+        >
+          <i class="bi bi-upc"></i>
+        </a>
+
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9">No items found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+function filterTable() {
+  const input = document.getElementById("searchInput");
+  const filter = input.value.toLowerCase();
+  const rows = document.querySelectorAll("table tbody tr");
+
+  rows.forEach(row => {
+    const productName = row.cells[0].textContent.toLowerCase();
+    const barcode = row.cells[1].textContent.toLowerCase();
+    row.style.display = productName.includes(filter) || barcode.includes(filter) ? "" : "none";
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('increaseQuantityBtn');
+  const formDiv = document.getElementById('updateQtyForm');
+  const cancelBtn = document.getElementById('cancelUpdateQty');
+
+  btn.addEventListener('click', () => {
+    formDiv.style.display = 'block';
+    btn.style.display = 'none';
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    formDiv.style.display = 'none';
+    btn.style.display = 'inline-block';
+  });
+});
+
+</script>
+
+{% endblock %}
